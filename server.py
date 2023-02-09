@@ -14,35 +14,49 @@ class Server:
 1) Listar arquivos
 2) Sair
 		"""
+
+	def __send_file(self):
+		...
+
+	def __send_folder(self):
+		...
 	
-	def handler(self, conn, addr) -> None:
+	def __handler(self, conn, addr) -> None:
+		#try:
 		option = 0
+		while option != 2: # REFATORAR
+			try:
+				option = int(conn.recv(1024).decode())
+				print(addr[0] + '->', option)
+			except:
+				pass
 
-		if option != 2:
-			option = int(conn.recv(1024).decode())
-			print(f'{addr} -> {option}')
-			#conn.send(b'[!] Invalid input!')
-			
 			proc = Popen('ls', stdout=PIPE, stderr=PIPE)
-			output, errors = proc.communicate(timeout=15)
-			str_output = output.decode()
-			conn.send(output)
+			match option:
+				case 1:		
+					output, errors = proc.communicate(timeout=15)
+					formated_output = f"{'-='*10} FILES {'=-'*10}\n".encode() + output
+					conn.send(formated_output)
 
-			print(str_output, errors)
+			print(output, errors)
+		else:
+			conn.close()
+			print('[+] Conexão encerrada!')
+			#except:	
+			...
+#			conn.close()
+#			print('[-] Conexão encerrada!')
 
 	def run(self) -> None:
-		print(type(self.host), type(self.port)) #-->
-		
 		self.sockServer.bind( (self.host, self.port) )
 		self.sockServer.listen(self.connections)
+		print(f'[+] Listening on {self.host} {self.port}')
 
 		connection, addrClient = self.sockServer.accept()
 		with connection as conn:
-
-			print('[+] Connection:', addrClient[0], addrClient[1]) #-->
-
+			print('[+] Connection:', addrClient[0], addrClient[1])
 			conn.send(self.banner.encode())
-			self.handler(conn, addrClient)
+			self.__handler(conn, addrClient)
 
 	def debbug(self) -> None:
 		print(self.__dict__)

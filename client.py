@@ -13,13 +13,17 @@ class Client:
 		print(banner)
 		
 		cmd = ''
-		#while cmd != b'2':
-		cmd = input('server>').encode()
-		self.sockClient.send(cmd)
-		response = self.sockClient.recv(1024).decode()
-		print(response)
-		#else:
-		self.sockClient.close()
+		while cmd != b'2':
+			cmd = input('server>').encode()
+			if cmd != b'1' and cmd != b'2': # REFATORAR
+				cmd = input('server WHILE>').encode()
+			else:
+				self.sockClient.send(cmd)
+				response = self.sockClient.recv(1024).decode()
+				print(response)
+		else:
+			self.sockClient.send(cmd)
+			self.sockClient.close()
 
 	def debbug(self) -> None:
 		print(self.__dict__)
