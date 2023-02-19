@@ -9,11 +9,12 @@ class Server:
 		self.port = port
 		self.connections = connections
 		self.banner = f"""
-[+] Connected\n
-{'=-'*10} MENU {'=-'*10}
-1) Listar arquivos
-2) Sair
-		"""
+\033[1;32m{'=-'*10} Comandos disponíveis {'=-'*10}\033[m
+\033[0;33m help\033[m-> Exibe esse menu 
+\033[0;33m ls\033[m-> Lista arquivos
+\033[0;33m get\033[m-> Baixa arquivo: get <filename>
+\033[0;33m exit\033[m-> Fecha conexão
+"""
 
 	def __send_file(self):
 		...
@@ -22,30 +23,42 @@ class Server:
 		...
 	
 	def __handler(self, conn, addr) -> None:
-		#try:
-		option = 0
-		while option != 2: # REFATORAR
+		while True:
 			try:
-				option = int(conn.recv(1024).decode())
-				print(addr[0] + '->', option)
+				cmd = conn.recv(1024).decode()
+			except:
+				pass
+					
+			match cmd:
+				case 'exit':
+					conn.close()
+					print('\033[1;32m[+] Conexão finalizada\033[m\n')
+					break
+				case 'help':
+					conn.send(self.banner.encode()) 
+
+		"""cmd = ''
+		while cmd != 'exit': # REFATORAR
+			try:
+				cmd = int(conn.recv(1024).decode())
+				print(addr[0] + '->', cmd)
 			except:
 				pass
 
-			proc = Popen('ls', stdout=PIPE, stderr=PIPE)
-			match option:
-				case 1:		
+			print('CMD:', cmd)
+
+			match cmd:
+				case 'ls':	
+					proc = Popen('ls', stdout=PIPE, stderr=PIPE)
 					output, errors = proc.communicate(timeout=15)
 					formated_output = f"{'-='*10} FILES {'=-'*10}\n".encode() + output
 					conn.send(formated_output)
-
-			print(output, errors)
+					print(output, errors)
+		
 		else:
 			conn.close()
 			print('[+] Conexão encerrada!')
-			#except:	
-			...
-#			conn.close()
-#			print('[-] Conexão encerrada!')
+		"""
 
 	def run(self) -> None:
 		self.sockServer.bind( (self.host, self.port) )
@@ -73,5 +86,4 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
 server = Server(sock, SERVER_IP, SERVER_PORT)
-server.debbug()
 server.run()
