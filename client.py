@@ -1,4 +1,5 @@
 import socket
+from time import sleep
 from sys import argv
 
 class Client:
@@ -7,20 +8,57 @@ class Client:
 		self.host = host
 		self.port = port
 
+	def __recv_file(self):
+		msg_response = self.sock.recv(1024).decode()
+		if msg_response == 'ACK':
+			sleep(1)
+			filename = self.sock.recv(1024).decode()
+			sleep(1)
+			print(f'\033[1;32m[+] Enviando arquivo:\033[m \033[35m{filename}\033[m')
+
+			with open(filename, 'wb') as file:
+				while True:
+					data = self.sock.recv(1024)
+					if data == b'FIN':
+						break
+					else:
+						file.write(data)
+
+					# Mostra cada recv(1024) do arquivo enviado
+					#print('BEGIN') #!
+					#print(data)
+					#print('END')
+				else:
+					print('\033[1;32m[+]\033[m Arquivo enviado com sucesso!')
+
+
+		elif msg_response == 'RST':
+			print('\033[1;31m[-]\033[m Arquivo inexistente')
+
 	def __handler(self):
 		cmd = ''
 		while cmd != 'exit':
-			cmd = input('server>')
+			cmd = input('server>').lower()
 			self.sock.send(cmd.encode())
-			try:
-				response = self.sock.recv(1024).decode()
-				print(response)
-			except:
-				pass
+
+			if cmd[:3] == 'get':
+				self.__recv_file()
+
+			elif cmd == 'ls':
+				print(f"\033[1;34m{'-='*10} FILES {'=-'*10}\033[m")
+				files = self.sock.recv(1024).decode()
+				print(files)
+			else:
+				try:
+					#! Fazer esperar só por alguns segundos
+					response = self.sock.recv(1024).decode()
+					print(response)
+				except:
+					pass
 		else:
 			self.sock.close()
-		print('\033[1;32m[+] Conexão finalizada\033[m\n')
-	
+		print('\033[1;32m[+] Conexão encerrada\033[m\n')
+
 	def run(self) -> None:
 		self.sock.connect( (self.host, self.port) )
 		banner = self.sock.recv(1024).decode()
@@ -28,22 +66,6 @@ class Client:
 
 		print(banner)
 		self.__handler()
-
-		"""
-		cmd = b''
-		while cmd != b'exit\n':
-			cmd = input('server>').encode()
-
-			self.sock.send(cmd)
-			print(cmd)
-			response = self.sock.recv(1024).decode()
-			print(response)
-
-		else:
-			self.sock.send(cmd)
-			self.sock.close()
-			print('[+] Conexão encerrada!')
-		"""
 
 	def debbug(self) -> None:
 		print(self.__dict__)
